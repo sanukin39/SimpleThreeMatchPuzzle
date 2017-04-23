@@ -90,11 +90,13 @@ public class Board : MonoBehaviour {
     // マッチングしているピースを削除する
     public void DeleteMathPiece()
     {
+        // マッチしているピースの削除フラグを立てる
         foreach (var piece in board)
         {
             piece.deleteFlag = IsMatchPiece(piece);
         }
 
+        // 削除フラグが立っているオブジェクトを削除する
         foreach (var piece in board)
         {
             if (piece != null && piece.deleteFlag)
@@ -208,9 +210,11 @@ public class Board : MonoBehaviour {
         var piece = board[(int)pos.x, (int)pos.y];
         if (piece != null && !piece.deleteFlag)
         {
+            // ピースが削除されていなければ何もしない
             return;
         }
 
+        // 対象のピースより上方向に有効なピースがあるかを確認、あるなら場所を移動させる
         var checkPos = pos + Vector2.up;
         while (IsInBoard(checkPos))
         {
@@ -224,6 +228,8 @@ public class Board : MonoBehaviour {
             }
             checkPos += Vector2.up;
         }
+
+        // 有効なピースがなければ新しく作る
         CreatePiece(pos);
     }
 }

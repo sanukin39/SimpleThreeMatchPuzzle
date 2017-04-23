@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+// ゲーム管理クラス
 public class GameManager : MonoBehaviour {
 
     // const.
