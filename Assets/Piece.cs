@@ -36,6 +36,12 @@ public class Piece : MonoBehaviour
         SetColor();
     }
 
+    // ピースの種類を返す
+    public PieceKind GetKind()
+    {
+        return kind;
+    }
+
     // ピースのサイズをセットする
     public void SetSize(int size)
     {
