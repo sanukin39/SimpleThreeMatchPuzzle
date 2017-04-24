@@ -111,14 +111,12 @@ public class GameManager : MonoBehaviour {
     // マッチングしているピースを削除する
     private void DeletePiece()
     {
-        board.DeleteMathPiece();
-        currentState = GameState.FillPiece;
+        StartCoroutine(board.DeleteMatchPiece(() => currentState = GameState.FillPiece));
     }
 
     // 盤面上のかけている部分にピースを補充する
     private void FillPiece()
     {
-        board.FillPiece();
-        currentState = GameState.MatchCheck;
+        StartCoroutine(board.FillPiece(() => currentState = GameState.MatchCheck));
     }
 }

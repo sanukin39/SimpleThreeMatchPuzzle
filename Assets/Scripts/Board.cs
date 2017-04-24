@@ -88,7 +88,7 @@ public class Board : MonoBehaviour {
     }
 
     // マッチングしているピースを削除する
-    public void DeleteMathPiece()
+    public IEnumerator DeleteMatchPiece(Action endCallBadk)
     {
         // マッチしているピースの削除フラグを立てる
         foreach (var piece in board)
@@ -104,10 +104,13 @@ public class Board : MonoBehaviour {
                 Destroy(piece.gameObject);
             }
         }
+
+        yield return new WaitForSeconds(1f);
+        endCallBadk();
     }
 
     // ピースが消えている場所を詰めて、新しいピースを生成する
-    public void FillPiece()
+    public IEnumerator FillPiece(Action endCallBack)
     {
         for (int i = 0; i < width; i++)
         {
@@ -116,6 +119,9 @@ public class Board : MonoBehaviour {
                 FillPiece(new Vector2(i, j));
             }
         }
+
+        yield return new WaitForSeconds(1f);
+        endCallBack();
     }
 
     //-------------------------------------------------------
