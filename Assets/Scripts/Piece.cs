@@ -48,6 +48,14 @@ public class Piece : MonoBehaviour
         this.thisRectTransform.sizeDelta = Vector2.one * size;
     }
 
+    // ピースの透過を設定する
+    public void SetPieceAlpha(float alpha)
+    {
+        var col = thisImage.color;
+        col.a = alpha;
+        thisImage.color = col;
+    }
+
     //-------------------------------------------------------
     // Private Function
     //-------------------------------------------------------

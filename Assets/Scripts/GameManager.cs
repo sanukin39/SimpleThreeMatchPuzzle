@@ -8,6 +8,7 @@ public class GameManager : MonoBehaviour {
 
     // const.
     public const int MachingCount = 3;
+    private const float SelectedPieceAlpha = 0.5f;
 
     // enum.
     private enum GameState
@@ -80,6 +81,7 @@ public class GameManager : MonoBehaviour {
         if (Input.GetMouseButtonDown(0))
         {
             selectedPiece = board.GetNearestPiece(Input.mousePosition);
+            selectedPiece.SetPieceAlpha(SelectedPieceAlpha);
             currentState = GameState.PieceMove;
         }
     }
@@ -96,6 +98,7 @@ public class GameManager : MonoBehaviour {
             }
         }
         else if (Input.GetMouseButtonUp(0)) {
+            selectedPiece.SetPieceAlpha(1f);
             currentState = GameState.MatchCheck;
         }
     }
