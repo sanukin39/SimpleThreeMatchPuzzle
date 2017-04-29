@@ -6,9 +6,15 @@ using UnityEngine;
 // 盤面クラス
 public class Board : MonoBehaviour {
 
+    // const
+    private const float FillPieceDuration = 0.2f;
+    private const float SwitchPieceCuration = 0.02f;
+
     // serialize field.
     [SerializeField]
     private GameObject piecePrefab;
+    [SerializeField]
+    private TweenAnimationManager animManager;
 
     // private.
     private Piece[,] board;
@@ -16,6 +22,9 @@ public class Board : MonoBehaviour {
     private int height;
     private int pieceWidth;
     private int randomSeed;
+    private Vector2[] directions = new Vector2[] { Vector2.up, Vector2.down, Vector2.right, Vector2.left };
+    private List<AnimData> fillPieceAnim = new List<AnimData>();
+    private List<Vector2> pieceCreatePos = new List<Vector2>();
 
     //-------------------------------------------------------
     // Public Function
@@ -29,7 +38,6 @@ public class Board : MonoBehaviour {
         pieceWidth = Screen.width / boardWidth;
 
         board = new Piece[width, height];
-
         for (int i = 0; i < boardWidth; i++)
         {
             for (int j = 0; j < boardHeight; j++)
@@ -37,35 +45,26 @@ public class Board : MonoBehaviour {
                 CreatePiece(new Vector2(i, j));
             }
         }
+
+        animManager.AddListAnimData(fillPieceAnim);
     }
 
     // 入力されたクリック(タップ)位置から最も近いピースの位置を返す
     public Piece GetNearestPiece(Vector3 input)
     {
-        var minDist = float.MaxValue;
-        Piece nearestPiece = null;
-
-        // 入力値と盤面のピース位置との距離を計算し、一番距離が短いピースを探す
-        foreach (var p in board)
-        {
-            var dist = Vector3.Distance(input, p.transform.position);
-            if (dist < minDist)
-            {
-                minDist = dist;
-                nearestPiece = p;
-            }
-        }
-
-        return nearestPiece;
+        var x = Mathf.Min((int)(input.x / pieceWidth), width - 1);
+        var y = Mathf.Min((int)(input.y / pieceWidth), height - 1);
+        return board[x, y];
     }
 
     // 盤面上のピースを交換する
     public void SwitchPiece(Piece p1, Piece p2)
     {
         // 位置を移動する
-        var p1Position = p1.transform.position;
-        p1.transform.position = p2.transform.position;
-        p2.transform.position = p1Position;
+        var animList = new List<AnimData>();
+        animList.Add(new AnimData(p1.gameObject, GetPieceWorldPos(GetPieceBoardPos(p2)), SwitchPieceCuration));
+        animList.Add(new AnimData(p2.gameObject, GetPieceWorldPos(GetPieceBoardPos(p1)), SwitchPieceCuration));
+        animManager.AddListAnimData(animList);
 
         // 盤面データを更新する
         var p1BoardPos = GetPieceBoardPos(p1);
@@ -90,28 +89,25 @@ public class Board : MonoBehaviour {
     // マッチングしているピースを削除する
     public IEnumerator DeleteMatchPiece(Action endCallBadk)
     {
-        // マッチしているピースの削除フラグを立てる
         foreach (var piece in board)
         {
-            piece.deleteFlag = IsMatchPiece(piece);
-        }
-
-        // 削除フラグが立っているオブジェクトを削除する
-        foreach (var piece in board)
-        {
-            if (piece != null && piece.deleteFlag)
+            if (piece != null && IsMatchPiece(piece))
             {
-                Destroy(piece.gameObject);
+                var pos = GetPieceBoardPos(piece);
+                DestroyMatchPiece(pos, piece.GetKind());
+                yield return new WaitForSeconds(0.5f);
             }
         }
-
-        yield return new WaitForSeconds(1f);
         endCallBadk();
     }
 
     // ピースが消えている場所を詰めて、新しいピースを生成する
     public IEnumerator FillPiece(Action endCallBack)
     {
+        // アニメーション管理リストとピース生成位置保持リストを初期化する
+        fillPieceAnim.Clear();
+        pieceCreatePos.Clear();
+
         for (int i = 0; i < width; i++)
         {
             for (int j = 0; j < height; j++)
@@ -119,6 +115,9 @@ public class Board : MonoBehaviour {
                 FillPiece(new Vector2(i, j));
             }
         }
+
+        // アニメーションを再生する
+        animManager.AddListAnimData(fillPieceAnim);
 
         yield return new WaitForSeconds(1f);
         endCallBack();
@@ -130,20 +129,33 @@ public class Board : MonoBehaviour {
     // 特定の位置にピースを作成する
     private void CreatePiece(Vector2 position)
     {
+        // ピースの位置を求める
+        var piecePos = GetPieceWorldPos(position);
+
         // ピースの生成位置を求める
-        var createPos = GetPieceWorldPos(position);
+        var createPos = new Vector2(position.x, height);
+        while (pieceCreatePos.Contains(createPos))
+        {
+            createPos += Vector2.up;
+        }
+
+        pieceCreatePos.Add(createPos);
+        var pieceCreateWorldPos = GetPieceWorldPos(createPos);
 
         // 生成するピースの種類をランダムに決める
         var kind = (PieceKind)UnityEngine.Random.Range(0, Enum.GetNames(typeof(PieceKind)).Length);
 
         // ピースを生成、ボードの子オブジェクトにする
-        var piece = Instantiate(piecePrefab, createPos, Quaternion.identity).GetComponent<Piece>();
+        var piece = Instantiate(piecePrefab, pieceCreateWorldPos, Quaternion.identity).GetComponent<Piece>();
         piece.transform.SetParent(transform);
         piece.SetSize(pieceWidth);
         piece.SetKind(kind);
 
         // 盤面にピースの情報をセットする
         board[(int)position.x, (int)position.y] = piece;
+
+        // アニメーションのセット
+        fillPieceAnim.Add(new AnimData(piece.gameObject, piecePos, FillPieceDuration));
     }
 
     // 盤面上の位置からピースオブジェクトのワールド座標での位置を返す
@@ -227,7 +239,7 @@ public class Board : MonoBehaviour {
             var checkPiece = board[(int)checkPos.x, (int)checkPos.y];
             if (checkPiece != null && !checkPiece.deleteFlag)
             {
-                checkPiece.transform.position = GetPieceWorldPos(pos);
+                fillPieceAnim.Add(new AnimData(checkPiece.gameObject, GetPieceWorldPos(pos), FillPieceDuration));
                 board[(int)pos.x, (int)pos.y] = checkPiece;
                 board[(int)checkPos.x, (int)checkPos.y] = null;
                 return;
@@ -237,5 +249,38 @@ public class Board : MonoBehaviour {
 
         // 有効なピースがなければ新しく作る
         CreatePiece(pos);
+    }
+
+    // 特定のピースがマッチしている場合、ほかのマッチしたピースとともに削除する
+    private void DestroyMatchPiece(Vector2 pos, PieceKind kind)
+    {
+        // ピースの場所が盤面以外だったら何もしない
+        if (!IsInBoard(pos))
+        {
+            return;
+        }
+
+        // ピースが無効であったり削除フラグが立っていたりそもそも、種別がちがうならば何もしない
+        var piece = board[(int)pos.x, (int)pos.y];
+        if (piece == null || piece.deleteFlag || piece.GetKind() != kind)
+        {
+            return;
+        }
+
+        // ピースが同じ種類でもマッチングしてなければ何もしない
+        if (!IsMatchPiece(piece))
+        {
+            return;
+        }
+
+        // 削除フラグをたてて、周り４方のピースを判定する
+        piece.deleteFlag = true;
+        foreach (var dir in directions)
+        {
+            DestroyMatchPiece(pos + dir, kind);
+        }
+
+        // ピースを削除する
+        Destroy(piece.gameObject);
     }
 }
