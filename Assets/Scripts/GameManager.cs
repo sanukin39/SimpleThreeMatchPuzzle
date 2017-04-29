@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour {
         MatchCheck,
         DeletePiece,
         FillPiece,
+        Wait,
     }
 
     // serialize field.
@@ -29,12 +30,14 @@ public class GameManager : MonoBehaviour {
     private GameState currentState;
     private Piece selectedPiece;
 
-    //-------------------------------------------------------
+     //-------------------------------------------------------
     // MonoBehaviour Function
     //-------------------------------------------------------
     // ゲームの初期化処理
     private void Start()
     {
+        Application.targetFrameRate = 60;
+
         board.InitializeBoard(6, 5);
 
         currentState = GameState.Idle;
@@ -59,6 +62,8 @@ public class GameManager : MonoBehaviour {
                 break;
             case GameState.FillPiece:
                 FillPiece();
+                break;
+            case GameState.Wait:
                 break;
             default:
                 break;
@@ -111,12 +116,14 @@ public class GameManager : MonoBehaviour {
     // マッチングしているピースを削除する
     private void DeletePiece()
     {
+        currentState = GameState.Wait;
         StartCoroutine(board.DeleteMatchPiece(() => currentState = GameState.FillPiece));
     }
 
     // 盤面上のかけている部分にピースを補充する
     private void FillPiece()
     {
+        currentState = GameState.Wait;
         StartCoroutine(board.FillPiece(() => currentState = GameState.MatchCheck));
     }
 }
