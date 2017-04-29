@@ -16,11 +16,13 @@ public class Board : MonoBehaviour {
     [SerializeField]
     private TweenAnimationManager animManager;
 
+    // public
+    public int pieceWidth;
+
     // private.
     private Piece[,] board;
     private int width;
     private int height;
-    private int pieceWidth;
     private int randomSeed;
     private Vector2[] directions = new Vector2[] { Vector2.up, Vector2.down, Vector2.right, Vector2.left };
     private List<AnimData> fillPieceAnim = new List<AnimData>();
@@ -123,6 +125,14 @@ public class Board : MonoBehaviour {
         endCallBack();
     }
 
+    // ピースのオブジェクトを生成する
+    public Piece InstantiatePiece(Vector3 createPos)
+    {
+        var piece = Instantiate(piecePrefab, createPos, Quaternion.identity).GetComponent<Piece>();
+        piece.transform.SetParent(transform);
+        return piece;
+    }
+
     //-------------------------------------------------------
     // Private Function
     //-------------------------------------------------------
@@ -142,13 +152,12 @@ public class Board : MonoBehaviour {
         pieceCreatePos.Add(createPos);
         var pieceCreateWorldPos = GetPieceWorldPos(createPos);
 
+        // ピースを生成、ボードの子オブジェクトにする
+        var piece = InstantiatePiece(pieceCreateWorldPos);
+        piece.SetSize(pieceWidth);
+
         // 生成するピースの種類をランダムに決める
         var kind = (PieceKind)UnityEngine.Random.Range(0, Enum.GetNames(typeof(PieceKind)).Length);
-
-        // ピースを生成、ボードの子オブジェクトにする
-        var piece = Instantiate(piecePrefab, pieceCreateWorldPos, Quaternion.identity).GetComponent<Piece>();
-        piece.transform.SetParent(transform);
-        piece.SetSize(pieceWidth);
         piece.SetKind(kind);
 
         // 盤面にピースの情報をセットする

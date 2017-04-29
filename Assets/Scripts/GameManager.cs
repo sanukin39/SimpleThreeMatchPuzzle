@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour {
     // private.
     private GameState currentState;
     private Piece selectedPiece;
+    private GameObject selectedPieceObject;
 
      //-------------------------------------------------------
     // MonoBehaviour Function
@@ -80,9 +81,7 @@ public class GameManager : MonoBehaviour {
     {
         if (Input.GetMouseButtonDown(0))
         {
-            selectedPiece = board.GetNearestPiece(Input.mousePosition);
-            selectedPiece.SetPieceAlpha(SelectedPieceAlpha);
-            currentState = GameState.PieceMove;
+            SelectPiece();
         }
     }
 
@@ -96,9 +95,11 @@ public class GameManager : MonoBehaviour {
             {
                 board.SwitchPiece(selectedPiece, piece);
             }
+            selectedPieceObject.transform.position = Input.mousePosition + Vector3.up * 10;
         }
         else if (Input.GetMouseButtonUp(0)) {
             selectedPiece.SetPieceAlpha(1f);
+            Destroy(selectedPieceObject);
             currentState = GameState.MatchCheck;
         }
     }
@@ -128,5 +129,19 @@ public class GameManager : MonoBehaviour {
     {
         currentState = GameState.Wait;
         StartCoroutine(board.FillPiece(() => currentState = GameState.MatchCheck));
+    }
+
+    // ピースを選択する処理
+    private void SelectPiece()
+    {
+        selectedPiece = board.GetNearestPiece(Input.mousePosition);
+        var piece = board.InstantiatePiece(Input.mousePosition);
+        piece.SetKind(selectedPiece.GetKind());
+        piece.SetSize((int)(board.pieceWidth * 1.2f));
+        piece.SetPieceAlpha(SelectedPieceAlpha);
+        selectedPieceObject = piece.gameObject;
+
+        selectedPiece.SetPieceAlpha(SelectedPieceAlpha);
+        currentState = GameState.PieceMove;
     }
 }
