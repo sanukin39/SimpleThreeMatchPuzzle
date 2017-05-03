@@ -97,7 +97,7 @@ public class Board : MonoBehaviour {
             {
                 var pos = GetPieceBoardPos(piece);
                 DestroyMatchPiece(pos, piece.GetKind());
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSeconds(0.4f);
             }
         }
         endCallBadk();
@@ -290,6 +290,7 @@ public class Board : MonoBehaviour {
         }
 
         // ピースを削除する
-        Destroy(piece.gameObject);
+        var tweenAlpha = piece.gameObject.AddComponent<AlphaTween>();
+        tweenAlpha.DoTween(1, 0, 0.3f, () => Destroy(piece.gameObject));
     }
 }
