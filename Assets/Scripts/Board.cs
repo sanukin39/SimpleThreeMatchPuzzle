@@ -15,6 +15,8 @@ public class Board : MonoBehaviour {
     private GameObject piecePrefab;
     [SerializeField]
     private TweenAnimationManager animManager;
+    [SerializeField]
+    private UIManager uiManager;
 
     // public
     public int pieceWidth;
@@ -97,6 +99,7 @@ public class Board : MonoBehaviour {
             {
                 var pos = GetPieceBoardPos(piece);
                 DestroyMatchPiece(pos, piece.GetKind());
+                uiManager.AddCombo();
                 yield return new WaitForSeconds(0.4f);
             }
         }

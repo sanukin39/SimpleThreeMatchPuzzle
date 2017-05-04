@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviour {
     [SerializeField]
     private Board board;
     [SerializeField]
-    private Text stateText;
+    private UIManager uiManager;
 
     // private.
     private GameState currentState;
@@ -70,7 +70,7 @@ public class GameManager : MonoBehaviour {
             default:
                 break;
         }
-        stateText.text = currentState.ToString();
+        uiManager.SetStatusText(currentState.ToString());
     }
 
     //-------------------------------------------------------
@@ -81,6 +81,7 @@ public class GameManager : MonoBehaviour {
     {
         if (Input.GetMouseButtonDown(0))
         {
+            uiManager.ResetCombo();
             SelectPiece();
         }
     }
